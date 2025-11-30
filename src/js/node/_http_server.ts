@@ -743,6 +743,16 @@ function onServerRequestEvent(this: NodeHTTPServerSocket, event: NodeHTTPRespons
   const socket: NodeHTTPServerSocket = this;
   switch (event) {
     case NodeHTTPResponseAbortEvent.abort: {
+      // Get the associated ServerResponse object
+      const response = socket._httpMessage;
+
+      // Emit 'close' on the response BEFORE destroying socket
+      // This allows cleanup handlers (like stream cancellation) to run
+      if (response && !response.closed) {
+        emitCloseNT(response);
+      }
+
+      // Now destroy the socket
       if (!socket.destroyed) {
         socket.destroy();
       }
